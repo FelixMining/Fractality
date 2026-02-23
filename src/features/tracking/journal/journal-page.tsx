@@ -1,0 +1,122 @@
+import { useState } from 'react'
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet'
+import { JournalList, countJournalFilters } from './journal-list'
+import type { JournalFilters } from './journal-list'
+import { JournalForm } from './journal-form'
+import { JournalDetail } from './journal-detail'
+import { FilterBar } from '@/components/shared/filter-bar'
+import { ProjectPicker } from '@/components/shared/project-picker'
+import { Label } from '@/components/ui/label'
+import { Input } from '@/components/ui/input'
+import type { JournalEntry } from '@/schemas/journal-entry.schema'
+
+const EMPTY_JOURNAL_FILTERS: JournalFilters = {
+  projectId: null,
+  from: '',
+  to: '',
+}
+
+export function JournalPage() {
+  const [showForm, setShowForm] = useState(false)
+  const [showDetail, setShowDetail] = useState(false)
+  const [selectedEntry, setSelectedEntry] = useState<JournalEntry | null>(null)
+  const [filters, setFilters] = useState<JournalFilters>(EMPTY_JOURNAL_FILTERS)
+
+  const handleAdd = () => {
+    setSelectedEntry(null)
+    setShowForm(true)
+  }
+
+  const handleSelect = (entry: JournalEntry) => {
+    setSelectedEntry(entry)
+    setShowDetail(true)
+  }
+
+  const handleEdit = () => {
+    setShowDetail(false)
+    setShowForm(true)
+  }
+
+  const handleClose = () => {
+    setShowForm(false)
+    setShowDetail(false)
+    setSelectedEntry(null)
+  }
+
+  return (
+    <>
+      <div className="px-4">
+        <FilterBar
+          activeCount={countJournalFilters(filters)}
+          onReset={() => setFilters(EMPTY_JOURNAL_FILTERS)}
+        >
+          <ProjectPicker
+            value={filters.projectId}
+            onChange={(id) => setFilters((f) => ({ ...f, projectId: id }))}
+            placeholder="Tous les projets"
+          />
+          <div className="space-y-2">
+            <Label className="text-xs text-muted-foreground uppercase tracking-wide">Période</Label>
+            <div className="grid grid-cols-2 gap-2">
+              <div className="space-y-1">
+                <Label htmlFor="journal-filter-from" className="text-xs">Du</Label>
+                <Input
+                  id="journal-filter-from"
+                  type="date"
+                  value={filters.from}
+                  onChange={(e) => setFilters((f) => ({ ...f, from: e.target.value }))}
+                />
+              </div>
+              <div className="space-y-1">
+                <Label htmlFor="journal-filter-to" className="text-xs">Au</Label>
+                <Input
+                  id="journal-filter-to"
+                  type="date"
+                  value={filters.to}
+                  onChange={(e) => setFilters((f) => ({ ...f, to: e.target.value }))}
+                />
+              </div>
+            </div>
+          </div>
+        </FilterBar>
+      </div>
+      <JournalList filters={filters} onAdd={handleAdd} onSelect={handleSelect} />
+
+      {/* Sheet formulaire création/édition */}
+      <Sheet open={showForm} onOpenChange={(open) => { if (!open) handleClose() }}>
+        <SheetContent>
+          <SheetHeader>
+            <SheetTitle>
+              {selectedEntry ? "Modifier l'entrée" : 'Nouvelle entrée'}
+            </SheetTitle>
+          </SheetHeader>
+          <div className="mt-4 overflow-y-auto pb-6">
+            <JournalForm
+              initialData={selectedEntry ?? undefined}
+              onSuccess={handleClose}
+              onCancel={handleClose}
+            />
+          </div>
+        </SheetContent>
+      </Sheet>
+
+      {/* Sheet détail */}
+      <Sheet open={showDetail} onOpenChange={(open) => { if (!open) handleClose() }}>
+        <SheetContent>
+          <SheetHeader>
+            <SheetTitle>Entrée journal</SheetTitle>
+          </SheetHeader>
+          <div className="mt-4 overflow-y-auto pb-6">
+            {selectedEntry && (
+              <JournalDetail
+                entry={selectedEntry}
+                onEdit={handleEdit}
+                onDeleted={handleClose}
+              />
+            )}
+          </div>
+        </SheetContent>
+      </Sheet>
+    </>
+  )
+}
