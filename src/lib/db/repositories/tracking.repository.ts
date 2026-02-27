@@ -133,7 +133,7 @@ class TrackingResponseRepository extends BaseRepository<TrackingResponse> {
     date: string,
     valueData: Pick<
       TrackingResponse,
-      'valueNumber' | 'valueBoolean' | 'valueChoice' | 'note'
+      'valueNumber' | 'valueBoolean' | 'valueChoice' | 'valueChoices' | 'note'
     >,
   ): Promise<TrackingResponse> {
     const existing = await this.table

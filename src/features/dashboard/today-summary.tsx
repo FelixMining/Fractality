@@ -1,4 +1,5 @@
 import { useLiveQuery } from 'dexie-react-hooks'
+import { CalendarDays, ClipboardList } from 'lucide-react'
 import { db } from '@/lib/db/database'
 import {
   isDueOnDate,
@@ -19,30 +20,31 @@ export function TodaySummary() {
       allRecurrings,
       todayResponses,
     ] = await Promise.all([
-      // Sessions travail du jour (filtrage local par date locale)
       db.work_sessions
         .filter((s) => !s.isDeleted && toLocalDateString(new Date(s.date)) === today)
         .toArray(),
-      // Événements du jour (eventDate = "YYYY-MM-DDTHH:mm")
       db.tracking_events
         .filter((e) => !e.isDeleted && e.eventDate.startsWith(today))
         .toArray(),
-      // Journal du jour (entryDate = "YYYY-MM-DDTHH:mm")
       db.journal_entries
         .filter((e) => !e.isDeleted && e.entryDate.startsWith(today))
         .toArray(),
-      // Tous les suivis actifs non supprimés
       trackingRecurringRepository.getAllSorted(),
-      // Réponses du jour
       trackingResponseRepository.getByDate(today),
     ])
 
-    // Filtrer les suivis planifiés aujourd'hui
     const dueRecurrings = allRecurrings.filter((r) => isDueOnDate(r, today))
     const answeredIds = new Set(todayResponses.map((r) => r.recurringId))
     const pendingRecurrings = dueRecurrings.filter((r) => !answeredIds.has(r.id))
+    // Trier : non répondus en premier
+    dueRecurrings.sort((a, b) => {
+      const aPending = !answeredIds.has(a.id)
+      const bPending = !answeredIds.has(b.id)
+      if (aPending && !bPending) return -1
+      if (!aPending && bPending) return 1
+      return 0
+    })
 
-    // Durée totale sessions travail (en secondes)
     const totalWorkSeconds = workSessions.reduce((sum, s) => sum + s.duration, 0)
 
     return {
@@ -59,9 +61,7 @@ export function TodaySummary() {
   if (data === undefined) {
     return (
       <section aria-label="Résumé du jour">
-        <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-muted-foreground">
-          Aujourd'hui
-        </h2>
+        <SectionTitle icon={<CalendarDays size={17} />} label="Aujourd'hui" />
         <div className="h-24 animate-pulse rounded-xl bg-card" />
       </section>
     )
@@ -72,13 +72,10 @@ export function TodaySummary() {
 
   return (
     <section aria-label="Résumé du jour">
-      <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-muted-foreground">
-        Aujourd'hui
-      </h2>
+      <SectionTitle icon={<CalendarDays size={17} />} label="Aujourd'hui" />
 
       {/* Cartes de résumé */}
       <div className="mb-4 grid grid-cols-3 gap-2">
-        {/* Sessions travail */}
         <div className="rounded-xl border border-border bg-card p-3">
           <p className="text-xs text-muted-foreground">Travail</p>
           <p className="mt-1 text-lg font-bold">{workCount}</p>
@@ -88,14 +85,10 @@ export function TodaySummary() {
             </p>
           )}
         </div>
-
-        {/* Événements */}
         <div className="rounded-xl border border-border bg-card p-3">
           <p className="text-xs text-muted-foreground">Événements</p>
           <p className="mt-1 text-lg font-bold">{eventCount}</p>
         </div>
-
-        {/* Journal */}
         <div className="rounded-xl border border-border bg-card p-3">
           <p className="text-xs text-muted-foreground">Journal</p>
           <p className="mt-1 text-lg font-bold">{journalCount}</p>
@@ -105,14 +98,15 @@ export function TodaySummary() {
       {/* Suivis du jour */}
       {dueRecurrings.length > 0 && (
         <div>
-          <h3 className="mb-2 text-sm font-medium text-muted-foreground">
-            Suivis du jour
+          <div className="mb-2 flex items-center justify-center gap-1.5">
+            <ClipboardList size={14} className="text-muted-foreground" />
+            <h3 className="text-sm font-semibold text-foreground">Suivis du jour</h3>
             {data.pendingCount > 0 && (
-              <span className="ml-2 rounded-full bg-accent/20 px-2 py-0.5 text-xs">
+              <span className="rounded-full bg-primary/20 px-2 py-0.5 text-xs text-primary">
                 {data.pendingCount} en attente
               </span>
             )}
-          </h3>
+          </div>
           <ul className="flex flex-col gap-2">
             {dueRecurrings.map((recurring) => (
               <TrackingItem
@@ -127,5 +121,15 @@ export function TodaySummary() {
         </div>
       )}
     </section>
+  )
+}
+
+// Composant titre de section partagé dans le dashboard
+export function SectionTitle({ icon, label }: { icon: React.ReactNode; label: string }) {
+  return (
+    <div className="mb-3 flex items-center justify-center gap-2">
+      <span className="text-muted-foreground">{icon}</span>
+      <h2 className="text-sm font-semibold uppercase tracking-wide text-foreground">{label}</h2>
+    </div>
   )
 }

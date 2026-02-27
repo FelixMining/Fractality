@@ -2,9 +2,13 @@ import { z } from 'zod'
 import { baseEntitySchema } from './base.schema'
 
 // Type de réponse attendue pour le suivi
-export const responseTypeEnum = z.enum(['number', 'boolean', 'choice'])
+// 'number'  → saisie libre (tout réel : négatif, décimal, grand nombre)
+// 'slider'  → slider configurable (min, max, step définis à la création)
+// 'boolean' → Oui / Non
+// 'choice'  → QCM (choix prédéfinis, simple ou multi-sélection)
+export const responseTypeEnum = z.enum(['number', 'slider', 'boolean', 'choice'])
 
-// Type de récurrence (même logique que stock-routine)
+// Type de récurrence
 export const trackingRecurrenceTypeEnum = z.enum(['daily', 'weekly', 'custom'])
 
 export const trackingRecurringSchema = baseEntitySchema.extend({
@@ -14,6 +18,12 @@ export const trackingRecurringSchema = baseEntitySchema.extend({
   unit: z.string().optional(),
   // Pour 'choice' : liste des options prédéfinies (min 2 options)
   choices: z.array(z.string().min(1)).optional(),
+  // Pour 'choice' : autoriser plusieurs sélections simultanées
+  multiChoice: z.boolean().optional(),
+  // Pour 'slider' : configuration du slider
+  sliderMin: z.number().optional(),
+  sliderMax: z.number().optional(),
+  sliderStep: z.number().optional(),
   // Récurrence
   recurrenceType: trackingRecurrenceTypeEnum,
   // Weekly : jours de la semaine (0=dimanche, 1=lundi, ..., 6=samedi)
@@ -22,7 +32,6 @@ export const trackingRecurringSchema = baseEntitySchema.extend({
   intervalDays: z.number().min(1).optional(),
   isActive: z.boolean().default(true),
   // Story 6.4 — lien automatique routines de consommation → suivis
-  // Défini uniquement si ce suivi a été auto-généré depuis une routine Stocks
   routineId: z.string().uuid().optional(),
   routineProductId: z.string().uuid().optional(),
   routineQuantity: z.number().min(0.001).optional(),
