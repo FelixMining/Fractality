@@ -14,7 +14,7 @@ import { Label } from '@/components/ui/label'
 import { Input } from '@/components/ui/input'
 import { useUndo } from '@/hooks/use-undo'
 import { workSessionRepository } from '@/lib/db/repositories/work-session.repository'
-import { consumeCreate } from '@/lib/create-signal'
+import { useCreateOnMount } from '@/hooks/use-create-on-mount'
 import type { WorkSession } from '@/schemas/work-session.schema'
 import { Timer, Plus } from 'lucide-react'
 
@@ -55,10 +55,7 @@ export function WorkSessionPage() {
   }, [activeWorkSession])
 
   // Ouvrir le formulaire de création si signalé par le bouton +
-  useEffect(() => {
-    if (consumeCreate()) handleCreateNew()
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+  useCreateOnMount(handleCreateNew)
 
   const handleStartTimer = () => {
     setShowTimer(true)
@@ -74,7 +71,7 @@ export function WorkSessionPage() {
     setViewMode('form')
   }
 
-  const handleCreateNew = () => {
+  function handleCreateNew() {
     setSessionFormDuration(undefined)
     setEditingSessionId(null)
     setEditingSessionData(null)
@@ -141,7 +138,7 @@ export function WorkSessionPage() {
   }
 
   return (
-    <div className="container mx-auto max-w-4xl space-y-6 p-4">
+    <div className="flex flex-col gap-6 px-4 pt-4 pb-6">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>

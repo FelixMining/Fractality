@@ -5,7 +5,7 @@ import { cn } from '@/lib/utils'
 const WORKOUT_TABS = [
   { to: '/sessions/workout', label: 'Séances', icon: Play, matchPrefix: null },
   { to: '/sessions/workout/programs', label: 'Programmes', icon: FolderKanban, matchPrefix: '/sessions/workout/programs' },
-  { to: '/workout/exercise-library', label: 'Exercices', icon: BookOpen, matchPrefix: '/workout/exercise-library' },
+  { to: '/sessions/workout/exercises', label: 'Exercices', icon: BookOpen, matchPrefix: '/sessions/workout/exercises' },
 ] as const
 
 function WorkoutLayout() {

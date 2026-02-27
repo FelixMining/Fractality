@@ -67,7 +67,7 @@ export function PillarSheet({ open, onOpenChange }: PillarSheetProps) {
       </div>
 
       {/* Contenu centré verticalement */}
-      <div className="flex flex-1 flex-col justify-center gap-1 px-4">
+      <div className="flex flex-1 flex-col justify-center gap-2 px-4">
         {!selectedPillar ? (
           // Menu principal — 3 piliers
           pillars.map((pillar) => {
@@ -76,16 +76,18 @@ export function PillarSheet({ open, onOpenChange }: PillarSheetProps) {
               <button
                 key={pillar.id}
                 onClick={() => setSelectedPillar(pillar)}
-                className="flex items-center gap-6 rounded-2xl px-6 py-7 text-left transition-colors active:bg-accent/60"
+                className="flex items-center gap-6 rounded-2xl px-6 py-9 text-left transition-colors active:bg-accent/60"
                 style={{ WebkitTapHighlightColor: 'transparent' }}
               >
                 <div
-                  className="flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl"
+                  className="flex h-18 w-18 shrink-0 items-center justify-center rounded-2xl"
                   style={{
-                    backgroundColor: `color-mix(in srgb, var(--color-${pillar.color}) 15%, transparent)`,
+                    backgroundColor: `color-mix(in srgb, var(--color-${pillar.color}) 20%, transparent)`,
+                    width: '72px',
+                    height: '72px',
                   }}
                 >
-                  <Icon size={32} style={{ color: `var(--color-${pillar.color})` }} />
+                  <Icon size={34} className="text-foreground" />
                 </div>
                 <span className="text-2xl font-semibold text-foreground">{pillar.label}</span>
               </button>
@@ -99,16 +101,18 @@ export function PillarSheet({ open, onOpenChange }: PillarSheetProps) {
               <button
                 key={sub.to}
                 onClick={() => handleSubTypeClick(sub.to, sub.openCreate)}
-                className="flex items-center gap-6 rounded-2xl px-6 py-6 text-left transition-colors active:bg-accent/60"
+                className="flex items-center gap-6 rounded-2xl px-6 py-8 text-left transition-colors active:bg-accent/60"
                 style={{ WebkitTapHighlightColor: 'transparent' }}
               >
                 <div
-                  className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl"
+                  className="flex shrink-0 items-center justify-center rounded-2xl"
                   style={{
-                    backgroundColor: `color-mix(in srgb, var(--color-${selectedPillar.color}) 15%, transparent)`,
+                    backgroundColor: `color-mix(in srgb, var(--color-${selectedPillar.color}) 20%, transparent)`,
+                    width: '64px',
+                    height: '64px',
                   }}
                 >
-                  <SubIcon size={28} style={{ color: `var(--color-${selectedPillar.color})` }} />
+                  <SubIcon size={30} className="text-foreground" />
                 </div>
                 <span className="text-xl font-medium text-foreground">{sub.label}</span>
               </button>

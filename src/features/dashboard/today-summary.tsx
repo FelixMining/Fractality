@@ -98,6 +98,7 @@ export function TodaySummary() {
       {/* Suivis du jour */}
       {dueRecurrings.length > 0 && (
         <div>
+          <hr className="mb-4 border-border" />
           <div className="mb-2 flex items-center justify-center gap-1.5">
             <ClipboardList size={14} className="text-muted-foreground" />
             <h3 className="text-sm font-semibold text-foreground">Suivis du jour</h3>
