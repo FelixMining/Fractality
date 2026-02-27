@@ -8,7 +8,6 @@ import {
   trackingResponseSchema,
   type TrackingResponse,
 } from '@/schemas/tracking-response.schema'
-import type { BaseEntity } from '@/schemas/base.schema'
 import { toLocalDateString } from '@/lib/utils'
 
 // ─── Helpers purs (isDueOnDate, getScheduledDates) ────────────────────────

@@ -23,6 +23,7 @@ function makeRecurring(overrides: Partial<TrackingRecurring> = {}): TrackingRecu
     createdAt: '2026-01-01T00:00:00.000Z',
     updatedAt: '2026-01-01T00:00:00.000Z',
     isDeleted: false,
+    deletedAt: null,
     ...overrides,
   }
 }
@@ -36,6 +37,7 @@ function makeResponse(overrides: Partial<TrackingResponse> = {}): TrackingRespon
     createdAt: '2026-01-15T10:00:00.000Z',
     updatedAt: '2026-01-15T10:00:00.000Z',
     isDeleted: false,
+    deletedAt: null,
     ...overrides,
   }
 }

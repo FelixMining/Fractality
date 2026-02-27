@@ -25,6 +25,7 @@ function makePurchase(overrides: Partial<StockPurchase> = {}): StockPurchase {
     createdAt: '2026-01-15T10:00:00.000Z',
     updatedAt: '2026-01-15T10:00:00.000Z',
     isDeleted: false,
+    deletedAt: null,
     ...overrides,
   }
 }
@@ -39,6 +40,7 @@ function makeProduct(overrides: Partial<StockProduct> = {}): StockProduct {
     createdAt: '2026-01-01T00:00:00.000Z',
     updatedAt: '2026-01-01T00:00:00.000Z',
     isDeleted: false,
+    deletedAt: null,
     ...overrides,
   }
 }
@@ -55,6 +57,7 @@ function makeRoutine(overrides: Partial<StockRoutine> = {}): StockRoutine {
     createdAt: '2026-01-01T00:00:00.000Z',
     updatedAt: '2026-01-01T00:00:00.000Z',
     isDeleted: false,
+    deletedAt: null,
     ...overrides,
   }
 }

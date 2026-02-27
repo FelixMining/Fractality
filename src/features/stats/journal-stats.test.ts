@@ -18,6 +18,7 @@ function makeEntry(overrides: Partial<JournalEntry> = {}): JournalEntry {
     createdAt: '2026-01-15T10:00:00.000Z',
     updatedAt: '2026-01-15T10:00:00.000Z',
     isDeleted: false,
+    deletedAt: null,
     ...overrides,
   }
 }

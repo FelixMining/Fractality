@@ -24,7 +24,7 @@ interface StatsLineChartProps {
   tickFormatter?: (value: string) => string
 }
 
-function CustomTooltip({ active, payload, label }: TooltipContentProps<number, string>) {
+function CustomTooltip({ active, payload, label }: Partial<TooltipContentProps<number, string>>) {
   if (!active || !payload?.length) return null
   return (
     <div

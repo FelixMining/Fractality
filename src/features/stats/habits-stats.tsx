@@ -299,7 +299,7 @@ export function HabitsStats() {
           title="Aucune activité enregistrée"
           subtitle="Commencez à enregistrer des sessions, stocks ou suivis pour voir vos habitudes ici."
           ctaLabel="Commencer à tracker"
-          ctaAction={() => void navigate({ to: '/dashboard' })}
+          ctaAction={() => void navigate({ to: '/' })}
         />
       </StatsLayout>
     )

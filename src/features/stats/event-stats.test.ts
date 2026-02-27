@@ -20,6 +20,7 @@ function makeEvent(overrides: Partial<TrackingEvent> = {}): TrackingEvent {
     createdAt: '2026-01-15T10:00:00.000Z',
     updatedAt: '2026-01-15T10:00:00.000Z',
     isDeleted: false,
+    deletedAt: null,
     ...overrides,
   }
 }
@@ -34,6 +35,7 @@ function makeEventType(overrides: Partial<EventType> = {}): EventType {
     createdAt: '2026-01-01T00:00:00.000Z',
     updatedAt: '2026-01-01T00:00:00.000Z',
     isDeleted: false,
+    deletedAt: null,
     ...overrides,
   }
 }
