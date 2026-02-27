@@ -55,40 +55,47 @@ export function ProgramDetail({
   }, [templates])
 
   if (!templatesWithExercises) {
-    return <div>Chargement...</div>
+    return (
+      <div className="space-y-3">
+        <div className="h-10 animate-pulse rounded-xl bg-card" />
+        <div className="h-16 animate-pulse rounded-xl bg-card" />
+        <div className="h-16 animate-pulse rounded-xl bg-card" />
+      </div>
+    )
   }
 
   return (
-    <div className="space-y-6">
+    <div className="flex flex-col gap-4">
       {/* Header */}
-      <div>
-        <h1 className="text-2xl font-bold">{program.name}</h1>
-        {program.description && (
-          <p className="text-muted-foreground mt-2">{program.description}</p>
-        )}
-        <div className="flex flex-wrap gap-2 mt-4">
-          <Button onClick={onAddSession}>
-            <Plus className="h-4 w-4 mr-2" />
-            Ajouter une séance-type
+      <div className="flex items-start justify-between gap-3">
+        <div className="flex-1 min-w-0">
+          <h1 className="text-lg font-semibold">{program.name}</h1>
+          {program.description && (
+            <p className="text-sm text-muted-foreground mt-1">{program.description}</p>
+          )}
+        </div>
+        <div className="flex gap-1 shrink-0">
+          <Button variant="ghost" size="icon" onClick={onEdit} aria-label="Modifier">
+            <Pencil className="h-4 w-4" />
           </Button>
-          <Button variant="outline" onClick={onEdit}>
-            <Pencil className="h-4 w-4 mr-2" />
-            Modifier
-          </Button>
-          <Button variant="outline" onClick={onDelete}>
-            <Trash2 className="h-4 w-4 mr-2" />
-            Supprimer
+          <Button variant="ghost" size="icon" onClick={onDelete} aria-label="Supprimer">
+            <Trash2 className="h-4 w-4" />
           </Button>
         </div>
       </div>
 
+      <Button size="sm" onClick={onAddSession} className="self-start">
+        <Plus className="h-4 w-4 mr-2" />
+        Ajouter une séance-type
+      </Button>
+
       {/* Séances-types */}
       {templatesWithExercises.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-12 text-center">
-          <Calendar className="h-16 w-16 text-muted-foreground mb-4" />
-          <h3 className="text-lg font-semibold mb-2">Aucune séance-type</h3>
-          <p className="text-muted-foreground mb-4">
-            Ajoutez votre première séance-type pour structurer ce programme
+        <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-border py-12 text-center">
+          <Calendar className="h-10 w-10 text-muted-foreground mb-3" />
+          <p className="text-sm font-medium">Aucune séance-type</p>
+          <p className="text-sm text-muted-foreground mt-1">
+            Ajoutez votre première séance-type.
           </p>
         </div>
       ) : (
@@ -102,7 +109,7 @@ export function ProgramDetail({
                 </div>
               </AccordionTrigger>
               <AccordionContent>
-                <div className="space-y-2 pt-2">
+                <div className="space-y-2 pt-2 pb-1">
                   {exercises.map(({ templateExercise, exercise }) => (
                     <div
                       key={templateExercise.id}

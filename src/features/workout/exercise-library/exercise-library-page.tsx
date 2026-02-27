@@ -7,7 +7,6 @@ import {
   SheetContent,
   SheetHeader,
   SheetTitle,
-  SheetDescription,
 } from '@/components/ui/sheet'
 import { ConfirmDialog } from '@/components/shared/confirm-dialog'
 import { useUndo } from '@/hooks/use-undo'
@@ -48,44 +47,30 @@ export function ExerciseLibraryPage() {
 
   const handleDeleteConfirm = async () => {
     if (!deletingExerciseId) return
-
     const exercise = await workoutExerciseRepository.getById(deletingExerciseId)
     if (!exercise) return
-
     await withUndo(
       `Exercice "${exercise.name}" supprimé`,
-      async () => {
-        await workoutExerciseRepository.softDelete(deletingExerciseId)
-      },
-      async () => {
-        await workoutExerciseRepository.restore(deletingExerciseId)
-      }
+      async () => { await workoutExerciseRepository.softDelete(deletingExerciseId) },
+      async () => { await workoutExerciseRepository.restore(deletingExerciseId) }
     )
-
     setDeleteDialogOpen(false)
     setDeletingExerciseId(null)
   }
 
   const handleFormSuccess = async (data: any) => {
-    // Si mode édition avec undo (AC3)
     if (formMode === 'edit' && editingExercise) {
       const oldData = {
         name: editingExercise.name,
         muscleGroup: editingExercise.muscleGroup,
         description: editingExercise.description,
       }
-
       await withUndo(
         `Exercice "${editingExercise.name}" modifié`,
-        async () => {
-          await workoutExerciseRepository.update(editingExercise.id, data)
-        },
-        async () => {
-          await workoutExerciseRepository.update(editingExercise.id, oldData)
-        }
+        async () => { await workoutExerciseRepository.update(editingExercise.id, data) },
+        async () => { await workoutExerciseRepository.update(editingExercise.id, oldData) }
       )
     }
-
     setSheetOpen(false)
     setEditingExercise(null)
   }
@@ -96,36 +81,23 @@ export function ExerciseLibraryPage() {
   }
 
   return (
-    <div className="container mx-auto max-w-4xl space-y-6 p-4">
-      {/* Header */}
+    <div className="flex flex-col gap-4">
       <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold">Bibliothèque d'Exercices</h1>
-          <p className="text-muted-foreground">
-            Gérez votre collection d'exercices de musculation
-          </p>
-        </div>
-        <Button onClick={handleCreateNew} size="lg" className="gap-2">
-          <Plus className="size-5" />
+        <h1 className="text-lg font-semibold">Bibliothèque d'exercices</h1>
+        <Button onClick={handleCreateNew} size="sm">
+          <Plus className="h-4 w-4 mr-2" />
           Nouvel exercice
         </Button>
       </div>
 
-      {/* Liste des exercices */}
       <ExerciseLibrary onEdit={handleEdit} onDelete={handleDeleteRequest} />
 
-      {/* Sheet pour le formulaire */}
       <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
         <SheetContent className="w-full overflow-y-auto sm:max-w-lg">
           <SheetHeader>
             <SheetTitle>
-              {formMode === 'create' ? 'Nouvel exercice' : 'Modifier l\'exercice'}
+              {formMode === 'create' ? 'Nouvel exercice' : "Modifier l'exercice"}
             </SheetTitle>
-            <SheetDescription>
-              {formMode === 'create'
-                ? 'Ajoutez un nouvel exercice à votre bibliothèque.'
-                : 'Modifiez les informations de cet exercice.'}
-            </SheetDescription>
           </SheetHeader>
           <div className="mt-6">
             <ExerciseForm
@@ -138,7 +110,6 @@ export function ExerciseLibraryPage() {
         </SheetContent>
       </Sheet>
 
-      {/* Dialog de confirmation suppression */}
       <ConfirmDialog
         open={deleteDialogOpen}
         onOpenChange={setDeleteDialogOpen}

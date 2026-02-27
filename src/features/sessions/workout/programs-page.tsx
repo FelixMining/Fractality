@@ -97,22 +97,17 @@ export function ProgramsPage() {
   }
 
   return (
-    <div className="flex min-h-screen flex-col">
+    <div className="flex flex-col gap-4">
       {/* Header */}
-      <header className="border-b border-border bg-background px-4 py-3">
-        <div className="flex items-center justify-between">
-          <h1 className="text-xl font-semibold">Mes programmes</h1>
-          <Button onClick={handleCreateClick} size="sm">
-            <Plus className="h-4 w-4 mr-2" />
-            Créer un programme
-          </Button>
-        </div>
-      </header>
+      <div className="flex items-center justify-between">
+        <h1 className="text-lg font-semibold">Mes programmes</h1>
+        <Button onClick={handleCreateClick} size="sm">
+          <Plus className="h-4 w-4 mr-2" />
+          Nouveau
+        </Button>
+      </div>
 
-      {/* Content */}
-      <main className="flex-1 px-4 py-6">
-        <ProgramList onView={handleView} onEdit={handleEdit} onDelete={handleDelete} />
-      </main>
+      <ProgramList onView={handleView} onEdit={handleEdit} onDelete={handleDelete} />
 
       {/* Sheet pour formulaire création/édition */}
       <Sheet open={showForm} onOpenChange={setShowForm}>
@@ -142,3 +137,4 @@ export function ProgramsPage() {
     </div>
   )
 }
+

@@ -22,36 +22,41 @@ export function ProgramList({ onView, onEdit, onDelete }: ProgramListProps) {
   const programs = useLiveQuery(() => workoutProgramRepository.getAllSorted(), [])
 
   if (!programs) {
-    return <div>Chargement...</div>
+    return (
+      <div className="space-y-3">
+        <div className="h-16 animate-pulse rounded-xl bg-card" />
+        <div className="h-16 animate-pulse rounded-xl bg-card" />
+        <div className="h-16 animate-pulse rounded-xl bg-card" />
+      </div>
+    )
   }
 
   if (programs.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center py-12 text-center">
-        <Dumbbell className="h-16 w-16 text-muted-foreground mb-4" />
-        <h3 className="text-lg font-semibold mb-2">Aucun programme</h3>
-        <p className="text-muted-foreground mb-4">
-          Créez votre premier programme pour structurer vos entraînements
+      <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-border py-12 text-center">
+        <Dumbbell className="h-10 w-10 text-muted-foreground mb-3" />
+        <p className="text-sm font-medium">Aucun programme</p>
+        <p className="text-sm text-muted-foreground mt-1">
+          Créez votre premier programme.
         </p>
       </div>
     )
   }
 
   return (
-    <div className="space-y-2">
+    <div className="space-y-3">
       {programs.map((program) => (
         <Card key={program.id} className="p-4">
-          <div className="flex items-start justify-between">
-            <div className="flex-1">
-              <h3 className="font-semibold">{program.name}</h3>
+          <div className="flex items-start justify-between gap-3">
+            <div className="flex-1 min-w-0">
+              <p className="font-medium text-sm">{program.name}</p>
               {program.description && (
-                <p className="text-sm text-muted-foreground mt-2 line-clamp-2">
+                <p className="text-sm text-muted-foreground mt-1 line-clamp-2">
                   {program.description}
                 </p>
               )}
-              {/* TODO: Badge nombre séances-types (AC1) - nécessite count depuis repository */}
             </div>
-            <div className="flex gap-2 ml-4">
+            <div className="flex gap-1 shrink-0">
               <Button variant="ghost" size="icon" onClick={() => onView(program)} aria-label="Voir le détail">
                 <Eye className="h-4 w-4" />
               </Button>
