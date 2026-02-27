@@ -1,3 +1,4 @@
+import type { RealtimeChannel } from '@supabase/supabase-js'
 import { db } from '@/lib/db/database'
 import { supabase } from '@/lib/supabase/client'
 import { syncRegistry } from './sync-registry'
@@ -6,13 +7,14 @@ import { withRetry } from './retry'
 import { toSnakeCase, toCamelCase } from '@/lib/utils'
 import { useSyncStore } from '@/stores/sync.store'
 
-const SYNC_INTERVAL_MS = 30_000
+const SYNC_INTERVAL_MS = 60_000 // Fallback polling (réduit car Realtime gère le temps réel)
 const PULL_PAGE_SIZE = 1000
 
 class SyncEngine {
   private timeoutHandle: ReturnType<typeof setTimeout> | null = null
   private isRunning = false
   private isSyncing = false
+  private realtimeChannel: RealtimeChannel | null = null
 
   start(): void {
     if (this.isRunning) return
@@ -25,6 +27,7 @@ class SyncEngine {
     if (navigator.onLine) {
       this.syncNow()
       this.scheduleSync()
+      this.subscribeRealtime()
     } else {
       useSyncStore.getState().setStatus('offline')
     }
@@ -36,6 +39,11 @@ class SyncEngine {
     if (this.timeoutHandle) {
       clearTimeout(this.timeoutHandle)
       this.timeoutHandle = null
+    }
+
+    if (this.realtimeChannel) {
+      void supabase.removeChannel(this.realtimeChannel)
+      this.realtimeChannel = null
     }
 
     window.removeEventListener('online', this.handleOnline)
@@ -69,12 +77,48 @@ class SyncEngine {
     }
   }
 
+  /**
+   * Abonnement Supabase Realtime — écoute toutes les tables syncables.
+   * Dès qu'un changement distant arrive (depuis un autre appareil),
+   * un pull immédiat est déclenché sans attendre le polling.
+   */
+  private subscribeRealtime(): void {
+    if (this.realtimeChannel) return
+
+    const tables = syncRegistry.getAll()
+    if (tables.length === 0) return
+
+    const channel = supabase.channel('fractality-sync')
+
+    for (const config of tables) {
+      channel.on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: config.supabaseTable },
+        () => {
+          void this.syncNow()
+        },
+      )
+    }
+
+    channel.subscribe((status) => {
+      if (status === 'SUBSCRIBED') {
+        console.log('[SyncEngine] Realtime connecté')
+      } else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
+        console.warn('[SyncEngine] Realtime déconnecté, fallback sur polling')
+        this.realtimeChannel = null
+      }
+    })
+
+    this.realtimeChannel = channel
+  }
+
   private handleOnline = (): void => {
     if (this.isSyncing) {
       useSyncStore.getState().setStatus('syncing')
     }
     this.syncNow()
     this.scheduleSync()
+    this.subscribeRealtime() // Reconnecter Realtime si déconnecté
   }
 
   private handleOffline = (): void => {
