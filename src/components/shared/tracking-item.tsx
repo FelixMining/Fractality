@@ -23,10 +23,12 @@ function formatResponseType(recurring: TrackingRecurring): string {
   switch (recurring.responseType) {
     case 'number':
       return recurring.unit ? `Valeur (${recurring.unit})` : 'Valeur chiffrée'
+    case 'slider':
+      return recurring.unit ? `Curseur (${recurring.unit})` : 'Curseur'
     case 'boolean':
       return 'Oui / Non'
     case 'choice':
-      return 'Choix multiple'
+      return recurring.multiChoice ? 'QCM multi-choix' : 'QCM'
   }
 }
 
