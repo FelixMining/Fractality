@@ -55,6 +55,7 @@ export const pillars: Pillar[] = [
     subTypes: [
       { to: '/sessions/work', label: 'Travail', icon: Timer },
       { to: '/sessions/workout', label: 'Musculation', icon: Dumbbell },
+      { to: '/sessions/workout/programs', label: 'Programmes', icon: FolderKanban },
       { to: '/sessions/cardio', label: 'Cardio', icon: Activity },
       { to: '/workout/exercise-library', label: 'Exercices', icon: BookOpen },
     ],
