@@ -8,6 +8,10 @@ import { WeekStats } from './week-stats'
 import { StreakDisplay } from './streak-display'
 import { ActivityFeed } from './activity-feed'
 
+function Divider() {
+  return <hr className="border-border" />
+}
+
 export function DashboardPage() {
   const hasAnyData = useLiveQuery(async () => {
     const counts = await Promise.all([
@@ -21,7 +25,6 @@ export function DashboardPage() {
     return counts.some((c) => c > 0)
   }, [])
 
-  // Skeleton pendant le chargement initial
   if (hasAnyData === undefined) {
     return (
       <div className="flex flex-col gap-4 p-4 pb-24">
@@ -41,12 +44,15 @@ export function DashboardPage() {
   }
 
   return (
-    <div className="flex flex-col gap-6 p-4 pb-24">
+    <div className="flex flex-col gap-5 px-4 pb-28 pt-4">
       <ActiveSessionsBanner />
       <TodaySummary />
+      <Divider />
       <StockAlerts />
       <WeekStats />
+      <Divider />
       <StreakDisplay />
+      <Divider />
       <ActivityFeed />
     </div>
   )

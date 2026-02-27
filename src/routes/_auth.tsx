@@ -4,7 +4,6 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { Sidebar } from '@/app/sidebar'
 import { MobileHeader } from '@/app/mobile-header'
 import { BottomNav } from '@/app/bottom-nav'
-import { FabButton } from '@/components/shared/fab-button'
 import { PillarSheet } from '@/components/shared/pillar-sheet'
 import { UndoToast } from '@/components/shared/undo-toast'
 import { useSync } from '@/hooks/use-sync'
@@ -53,11 +52,8 @@ function AuthLayout() {
         </main>
       </div>
 
-      {/* Bottom nav mobile */}
-      <BottomNav />
-
-      {/* FAB mobile */}
-      <FabButton onClick={() => setPillarSheetOpen(true)} />
+      {/* Bottom nav mobile (avec bouton + intégré) */}
+      <BottomNav onPlusClick={() => setPillarSheetOpen(true)} />
 
       {/* PillarSheet */}
       <PillarSheet open={pillarSheetOpen} onOpenChange={setPillarSheetOpen} />

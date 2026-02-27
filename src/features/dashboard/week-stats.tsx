@@ -1,4 +1,5 @@
 import { useLiveQuery } from 'dexie-react-hooks'
+import { TrendingUp } from 'lucide-react'
 import { db } from '@/lib/db/database'
 import { toLocalDateString, formatDuration } from '@/lib/utils'
 import {
@@ -6,14 +7,15 @@ import {
   trackingRecurringRepository,
   trackingResponseRepository,
 } from '@/lib/db/repositories/tracking.repository'
+import { SectionTitle } from './today-summary'
 
 /**
  * Calcule le lundi et dimanche de la semaine contenant `today` (semaine ISO, lundi = J1).
  */
 export function getWeekRange(today: string): { weekStart: string; weekEnd: string } {
   const d = new Date(today + 'T12:00:00')
-  const dayOfWeek = d.getDay() // 0 = Dim, 1 = Lun, ..., 6 = Sam
-  const daysFromMonday = (dayOfWeek + 6) % 7 // Lun = 0, ..., Dim = 6
+  const dayOfWeek = d.getDay()
+  const daysFromMonday = (dayOfWeek + 6) % 7
   const monday = new Date(d)
   monday.setDate(d.getDate() - daysFromMonday)
   const sunday = new Date(monday)
@@ -47,7 +49,6 @@ export function WeekStats() {
     async () => {
       const [workSessions, workoutSessions, cardioSessions, allRecurrings, weekResponses] =
         await Promise.all([
-          // Sessions travail de la semaine (date = ISO datetime)
           db.work_sessions
             .filter((s) => {
               if (s.isDeleted) return false
@@ -55,8 +56,6 @@ export function WeekStats() {
               return localDate >= weekStart && localDate <= today
             })
             .toArray(),
-
-          // Séances musculation complétées de la semaine
           db.workout_sessions
             .filter((s) => {
               if (s.isDeleted || s.status !== 'completed') return false
@@ -64,8 +63,6 @@ export function WeekStats() {
               return localDate >= weekStart && localDate <= today
             })
             .toArray(),
-
-          // Sessions cardio de la semaine
           db.cardio_sessions
             .filter((s) => {
               if (s.isDeleted) return false
@@ -73,21 +70,13 @@ export function WeekStats() {
               return localDate >= weekStart && localDate <= today
             })
             .toArray(),
-
-          // Tous les suivis actifs
           trackingRecurringRepository.getAllSorted(),
-
-          // Réponses de la semaine (du lundi à aujourd'hui)
           trackingResponseRepository.getInDateRange(weekStart, today),
         ])
 
-      // Heures de travail — duration est en secondes
       const totalWorkSeconds = workSessions.reduce((sum, s) => sum + (s.duration ?? 0), 0)
-
-      // Sessions sport
       const sportCount = workoutSessions.length + cardioSessions.length
 
-      // Taux de completion des suivis
       const daysElapsed = getDaysFromWeekStart(weekStart, today)
       const responseSet = new Set(weekResponses.map((r) => `${r.recurringId}_${r.date}`))
       let totalDue = 0
@@ -108,34 +97,32 @@ export function WeekStats() {
   )
 
   if (weekData === undefined) {
-    return <div className="h-24 animate-pulse rounded-xl bg-card" />
+    return (
+      <section>
+        <SectionTitle icon={<TrendingUp size={17} />} label="Cette semaine" />
+        <div className="h-24 animate-pulse rounded-xl bg-card" />
+      </section>
+    )
   }
 
   const { totalWorkSeconds, sportCount, completionRate } = weekData
 
   return (
     <section>
-      <h3 className="mb-2 text-sm font-semibold uppercase tracking-wide text-muted-foreground">
-        Cette semaine
-      </h3>
+      <SectionTitle icon={<TrendingUp size={17} />} label="Cette semaine" />
       <div className="grid grid-cols-3 gap-3">
-        {/* Heures de travail */}
         <div className="flex flex-col gap-1 rounded-xl border border-border bg-card p-3">
           <span className="text-xs text-muted-foreground">Travail</span>
           <span className="text-lg font-bold">
             {totalWorkSeconds > 0 ? formatDuration(totalWorkSeconds, false) : '0min'}
           </span>
         </div>
-
-        {/* Sessions sport */}
         <div className="flex flex-col gap-1 rounded-xl border border-border bg-card p-3">
           <span className="text-xs text-muted-foreground">Sport</span>
           <span className="text-lg font-bold">
             {sportCount} séance{sportCount !== 1 ? 's' : ''}
           </span>
         </div>
-
-        {/* Taux completion suivis */}
         <div className="flex flex-col gap-1 rounded-xl border border-border bg-card p-3">
           <span className="text-xs text-muted-foreground">Suivis</span>
           <span className="text-lg font-bold">

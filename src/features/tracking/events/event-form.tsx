@@ -1,11 +1,12 @@
+import { useEffect, useRef, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { useLiveQuery } from 'dexie-react-hooks'
+import { MapPin, Loader2 } from 'lucide-react'
 import { trackingEventRepository } from '@/lib/db/repositories/event.repository'
 import { eventTypeRepository } from '@/lib/db/repositories/event.repository'
 import { useUndo } from '@/hooks/use-undo'
-import { eventPriorityEnum } from '@/schemas/tracking-event.schema'
 import { formatLocalDatetime } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -18,30 +19,17 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { toast } from 'sonner'
-import type { TrackingEvent, EventPriority } from '@/schemas/tracking-event.schema'
+import type { TrackingEvent } from '@/schemas/tracking-event.schema'
 
 const eventFormSchema = z.object({
   title: z.string().min(1, 'Le titre est requis'),
   typeId: z.string().optional(),
   eventDate: z.string().min(1, 'La date est requise'),
-  priority: eventPriorityEnum,
   description: z.string().optional(),
   location: z.string().optional(),
 })
 
 type EventFormValues = z.infer<typeof eventFormSchema>
-
-const PRIORITY_OPTIONS: { value: EventPriority; label: string }[] = [
-  { value: 'low', label: 'Basse' },
-  { value: 'medium', label: 'Moyenne' },
-  { value: 'high', label: 'Haute' },
-]
-
-const PRIORITY_BUTTON_STYLES: Record<EventPriority, string> = {
-  low: 'border-blue-500 bg-blue-500/20 text-blue-300',
-  medium: 'border-yellow-500 bg-yellow-500/20 text-yellow-300',
-  high: 'border-red-500 bg-red-500/20 text-red-300',
-}
 
 interface EventFormProps {
   initialData?: TrackingEvent
@@ -53,6 +41,10 @@ export function EventForm({ initialData, onSuccess, onCancel }: EventFormProps) 
   const isEditing = Boolean(initialData)
   const { withUndo } = useUndo()
   const types = useLiveQuery(() => eventTypeRepository.getAllSorted(), [])
+  const [geoLoading, setGeoLoading] = useState(false)
+
+  // Garde en mémoire le dernier titre auto-rempli pour ne pas écraser une saisie manuelle
+  const autoFilledTitle = useRef<string>('')
 
   const defaultDate = formatLocalDatetime(new Date())
 
@@ -69,7 +61,6 @@ export function EventForm({ initialData, onSuccess, onCancel }: EventFormProps) 
           title: initialData.title,
           typeId: initialData.typeId ?? '',
           eventDate: initialData.eventDate,
-          priority: initialData.priority ?? 'medium',
           description: initialData.description ?? '',
           location: initialData.location ?? '',
         }
@@ -77,14 +68,71 @@ export function EventForm({ initialData, onSuccess, onCancel }: EventFormProps) 
           title: '',
           typeId: '',
           eventDate: defaultDate,
-          priority: 'medium',
           description: '',
           location: '',
         },
   })
 
-  const currentPriority = watch('priority')
   const currentTypeId = watch('typeId')
+
+  // Auto-remplir le titre quand un type est sélectionné
+  useEffect(() => {
+    if (!types || isEditing) return
+    const type = types.find((t) => t.id === currentTypeId)
+    if (type) {
+      const currentTitle = watch('title')
+      // Ne remplace le titre que s'il est vide ou correspond au précédent auto-remplissage
+      if (currentTitle === '' || currentTitle === autoFilledTitle.current) {
+        const newTitle = type.name
+        setValue('title', newTitle)
+        autoFilledTitle.current = newTitle
+      }
+    } else if (!currentTypeId) {
+      const currentTitle = watch('title')
+      if (currentTitle === autoFilledTitle.current) {
+        setValue('title', '')
+        autoFilledTitle.current = ''
+      }
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentTypeId, types])
+
+  // Géolocalisation via Nominatim (OpenStreetMap)
+  const handleGeolocate = () => {
+    if (!navigator.geolocation) {
+      toast.error('Géolocalisation non disponible sur cet appareil')
+      return
+    }
+    setGeoLoading(true)
+    navigator.geolocation.getCurrentPosition(
+      async (pos) => {
+        const { latitude, longitude } = pos.coords
+        try {
+          const res = await fetch(
+            `https://nominatim.openstreetmap.org/reverse?lat=${latitude}&lon=${longitude}&format=json`,
+            { headers: { 'Accept-Language': 'fr' } },
+          )
+          const data = await res.json()
+          const addr = data.address ?? {}
+          const road = addr.house_number && addr.road
+            ? `${addr.house_number} ${addr.road}`
+            : addr.road
+          const city = addr.city || addr.town || addr.village || addr.county
+          const parts = [road, city].filter(Boolean)
+          const shortAddr = parts.length > 0 ? parts.join(', ') : data.display_name
+          setValue('location', shortAddr)
+        } catch {
+          setValue('location', `${latitude.toFixed(5)}, ${longitude.toFixed(5)}`)
+        }
+        setGeoLoading(false)
+      },
+      () => {
+        toast.error('Localisation refusée ou indisponible')
+        setGeoLoading(false)
+      },
+      { timeout: 10000 },
+    )
+  }
 
   const onSubmit = async (data: EventFormValues) => {
     try {
@@ -92,7 +140,6 @@ export function EventForm({ initialData, onSuccess, onCancel }: EventFormProps) 
         title: data.title,
         typeId: data.typeId || undefined,
         eventDate: data.eventDate,
-        priority: data.priority,
         description: data.description || undefined,
         location: data.location || undefined,
       }
@@ -109,7 +156,6 @@ export function EventForm({ initialData, onSuccess, onCancel }: EventFormProps) 
               title: old.title,
               typeId: old.typeId,
               eventDate: old.eventDate,
-              priority: old.priority,
               description: old.description,
               location: old.location,
             })
@@ -140,23 +186,7 @@ export function EventForm({ initialData, onSuccess, onCancel }: EventFormProps) 
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-      {/* Titre */}
-      <div className="space-y-2">
-        <Label htmlFor="event-title">Titre *</Label>
-        <Input
-          id="event-title"
-          placeholder="Ex: Rendez-vous cardiologue, Départ en vacances…"
-          {...register('title')}
-          aria-describedby={errors.title ? 'event-title-error' : undefined}
-        />
-        {errors.title && (
-          <p id="event-title-error" className="text-sm text-destructive">
-            {errors.title.message}
-          </p>
-        )}
-      </div>
-
-      {/* Type */}
+      {/* Type — en premier pour auto-remplir le titre */}
       <div className="space-y-2">
         <Label htmlFor="event-type">Type (optionnel)</Label>
         <Select
@@ -177,6 +207,22 @@ export function EventForm({ initialData, onSuccess, onCancel }: EventFormProps) 
         </Select>
       </div>
 
+      {/* Titre */}
+      <div className="space-y-2">
+        <Label htmlFor="event-title">Titre *</Label>
+        <Input
+          id="event-title"
+          placeholder="Ex: Rendez-vous cardiologue, Départ en vacances…"
+          {...register('title')}
+          aria-describedby={errors.title ? 'event-title-error' : undefined}
+        />
+        {errors.title && (
+          <p id="event-title-error" className="text-sm text-destructive">
+            {errors.title.message}
+          </p>
+        )}
+      </div>
+
       {/* Date / Heure */}
       <div className="space-y-2">
         <Label htmlFor="event-date">Date et heure *</Label>
@@ -191,27 +237,6 @@ export function EventForm({ initialData, onSuccess, onCancel }: EventFormProps) 
             {errors.eventDate.message}
           </p>
         )}
-      </div>
-
-      {/* Priorité — 3 boutons radio visuels */}
-      <div className="space-y-2">
-        <Label>Priorité</Label>
-        <div className="flex gap-2">
-          {PRIORITY_OPTIONS.map((opt) => (
-            <button
-              key={opt.value}
-              type="button"
-              onClick={() => setValue('priority', opt.value)}
-              className={`flex-1 rounded-lg border px-3 py-2 text-sm font-medium transition-colors ${
-                currentPriority === opt.value
-                  ? PRIORITY_BUTTON_STYLES[opt.value]
-                  : 'border-border bg-transparent text-muted-foreground'
-              }`}
-            >
-              {opt.label}
-            </button>
-          ))}
-        </div>
       </div>
 
       {/* Description */}
@@ -229,11 +254,29 @@ export function EventForm({ initialData, onSuccess, onCancel }: EventFormProps) 
       {/* Localisation */}
       <div className="space-y-2">
         <Label htmlFor="event-location">Localisation (optionnel)</Label>
-        <Input
-          id="event-location"
-          placeholder="Ex: Paris, Clinique Saint-Louis, En ligne…"
-          {...register('location')}
-        />
+        <div className="flex gap-2">
+          <Input
+            id="event-location"
+            placeholder="Ex: Paris, Clinique Saint-Louis, En ligne…"
+            {...register('location')}
+            className="flex-1"
+          />
+          <Button
+            type="button"
+            variant="outline"
+            size="icon"
+            onClick={handleGeolocate}
+            disabled={geoLoading}
+            aria-label="Utiliser la localisation actuelle"
+            title="Localisation actuelle"
+          >
+            {geoLoading ? (
+              <Loader2 size={16} className="animate-spin" />
+            ) : (
+              <MapPin size={16} />
+            )}
+          </Button>
+        </div>
       </div>
 
       {/* Actions */}
