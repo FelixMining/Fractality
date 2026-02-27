@@ -52,15 +52,19 @@ export function TrackingItem({
   const [showDeleteDialog, setShowDeleteDialog] = useState(false)
   const isAnswered = !!todayResponse
 
+  const cardClass = isDueToday && !isAnswered
+    ? 'rounded-xl border border-primary/40 bg-primary/5 p-3'
+    : 'rounded-xl border border-border bg-card p-3'
+
   return (
     <>
-      <li className="rounded-xl bg-card border border-border p-3">
+      <li className={cardClass}>
         <div className="flex items-start gap-3">
-          {/* Dot état (visible seulement si planifié aujourd'hui) */}
+          {/* Indicateur d'état (visible seulement si planifié aujourd'hui) */}
           {isDueToday && (
             <span
-              className="mt-1 h-2.5 w-2.5 flex-shrink-0 rounded-full"
-              style={{ backgroundColor: isAnswered ? '#8B5CF6' : '#4B5563' }}
+              className={`mt-1 h-2.5 w-2.5 flex-shrink-0 rounded-full ${!isAnswered ? 'animate-pulse' : ''}`}
+              style={{ backgroundColor: isAnswered ? '#8B5CF6' : '#8B5CF6', opacity: isAnswered ? 1 : 0.5 }}
               aria-label={isAnswered ? 'Rempli' : 'Non rempli'}
             />
           )}

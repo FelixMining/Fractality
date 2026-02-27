@@ -41,6 +41,14 @@ export function TodaySummary() {
     const dueRecurrings = allRecurrings.filter((r) => isDueOnDate(r, today))
     const answeredIds = new Set(todayResponses.map((r) => r.recurringId))
     const pendingRecurrings = dueRecurrings.filter((r) => !answeredIds.has(r.id))
+    // Trier : non répondus en premier
+    dueRecurrings.sort((a, b) => {
+      const aPending = !answeredIds.has(a.id)
+      const bPending = !answeredIds.has(b.id)
+      if (aPending && !bPending) return -1
+      if (!aPending && bPending) return 1
+      return 0
+    })
 
     // Durée totale sessions travail (en secondes)
     const totalWorkSeconds = workSessions.reduce((sum, s) => sum + s.duration, 0)

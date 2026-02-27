@@ -160,14 +160,14 @@ export function EventForm({ initialData, onSuccess, onCancel }: EventFormProps) 
       <div className="space-y-2">
         <Label htmlFor="event-type">Type (optionnel)</Label>
         <Select
-          value={currentTypeId ?? ''}
-          onValueChange={(v) => setValue('typeId', v)}
+          value={currentTypeId || '__none__'}
+          onValueChange={(v) => setValue('typeId', v === '__none__' ? '' : v)}
         >
           <SelectTrigger id="event-type">
             <SelectValue placeholder="Aucun type" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="">Aucun type</SelectItem>
+            <SelectItem value="__none__">Aucun type</SelectItem>
             {types?.map((type) => (
               <SelectItem key={type.id} value={type.id}>
                 {type.icon ? `${type.icon} ` : ''}{type.name}

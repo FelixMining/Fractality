@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Slider } from '@/components/ui/slider'
 import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
 import {
   trackingResponseRepository,
 } from '@/lib/db/repositories/tracking.repository'
@@ -16,6 +17,13 @@ interface RecurringResponseProps {
   date: string // YYYY-MM-DD
 }
 
+type ValueData = {
+  valueNumber?: number
+  valueBoolean?: boolean
+  valueChoice?: string
+  valueChoices?: string[]
+}
+
 export function RecurringResponse({
   recurring,
   existingResponse,
@@ -23,11 +31,20 @@ export function RecurringResponse({
 }: RecurringResponseProps) {
   const [isSubmitting, setIsSubmitting] = useState(false)
 
-  const handleSave = async (value: {
-    valueNumber?: number
-    valueBoolean?: boolean
-    valueChoice?: string
-  }) => {
+  // État local pour saisie libre (type 'number')
+  const [numberInput, setNumberInput] = useState(
+    existingResponse?.valueNumber !== undefined ? String(existingResponse.valueNumber) : '',
+  )
+
+  // État local pour slider (type 'slider')
+  const sliderMin = recurring.sliderMin ?? 1
+  const sliderMax = recurring.sliderMax ?? 10
+  const sliderStep = recurring.sliderStep ?? 1
+  const [sliderValue, setSliderValue] = useState(
+    existingResponse?.valueNumber ?? sliderMin,
+  )
+
+  const handleSave = async (value: ValueData) => {
     if (isSubmitting) return
     setIsSubmitting(true)
     try {
@@ -58,6 +75,7 @@ export function RecurringResponse({
     setIsSubmitting(false)
   }
 
+  // ─── Oui / Non ────────────────────────────────────────────────────────
   if (recurring.responseType === 'boolean') {
     return (
       <div className="flex gap-2 mt-2">
@@ -83,7 +101,43 @@ export function RecurringResponse({
     )
   }
 
+  // ─── QCM ──────────────────────────────────────────────────────────────
   if (recurring.responseType === 'choice') {
+    if (recurring.multiChoice) {
+      // Multi-sélection
+      const currentChoices = existingResponse?.valueChoices ?? []
+      const toggleChoice = (choice: string) => {
+        const updated = currentChoices.includes(choice)
+          ? currentChoices.filter((c) => c !== choice)
+          : [...currentChoices, choice]
+        handleSave({ valueChoices: updated })
+      }
+      return (
+        <div className="flex flex-wrap gap-2 mt-2">
+          {recurring.choices?.map((choice) => {
+            const isSelected = currentChoices.includes(choice)
+            return (
+              <button
+                key={choice}
+                type="button"
+                onClick={() => toggleChoice(choice)}
+                disabled={isSubmitting}
+                className={`rounded-md border px-3 py-1.5 text-sm font-medium transition-colors ${
+                  isSelected
+                    ? 'border-primary bg-primary/15 text-foreground'
+                    : 'border-border bg-transparent text-muted-foreground hover:border-muted-foreground'
+                }`}
+              >
+                {isSelected && <span className="mr-1.5 text-primary">✓</span>}
+                {choice}
+              </button>
+            )
+          })}
+        </div>
+      )
+    }
+
+    // Choix unique
     return (
       <div className="flex flex-wrap gap-2 mt-2">
         {recurring.choices?.map((choice) => (
@@ -102,29 +156,76 @@ export function RecurringResponse({
     )
   }
 
-  // responseType === 'number'
-  const currentValue = existingResponse?.valueNumber ?? 5
+  // ─── Curseur configurable (slider) ───────────────────────────────────
+  if (recurring.responseType === 'slider') {
+    const unitLabel = recurring.unit ? ` ${recurring.unit}` : ''
+    const displayValue =
+      existingResponse?.valueNumber !== undefined
+        ? `${existingResponse.valueNumber}${unitLabel}`
+        : `${sliderValue}${unitLabel}`
+
+    return (
+      <div className="mt-2 space-y-1">
+        <div className="flex items-center justify-between text-xs text-muted-foreground">
+          <span>{sliderMin}{unitLabel}</span>
+          <span className="font-semibold tabular-nums text-foreground">{displayValue}</span>
+          <span>{sliderMax}{unitLabel}</span>
+        </div>
+        <Slider
+          min={sliderMin}
+          max={sliderMax}
+          step={sliderStep}
+          value={[sliderValue]}
+          onValueChange={([val]) => setSliderValue(val)}
+          onValueCommit={([val]) => handleSave({ valueNumber: val })}
+          aria-label={`Valeur ${recurring.name}`}
+          disabled={isSubmitting}
+        />
+      </div>
+    )
+  }
+
+  // ─── Valeur libre (number) ────────────────────────────────────────────
+  const unitLabel = recurring.unit ? ` ${recurring.unit}` : ''
+  const hasValue = existingResponse?.valueNumber !== undefined
+
+  const submitNumber = () => {
+    const val = parseFloat(numberInput.replace(',', '.'))
+    if (isNaN(val)) return
+    handleSave({ valueNumber: val })
+  }
 
   return (
-    <div className="mt-2 space-y-1">
-      <div className="flex items-center justify-between text-xs text-muted-foreground">
-        <span>1</span>
-        <span className="font-medium tabular-nums">
-          {existingResponse?.valueNumber !== undefined
-            ? `${existingResponse.valueNumber}${recurring.unit ? ` ${recurring.unit}` : ''}`
-            : '—'}
-        </span>
-        <span>10</span>
+    <div className="mt-2 space-y-1.5">
+      {hasValue && (
+        <p className="text-xs text-muted-foreground">
+          Valeur actuelle :{' '}
+          <span className="font-semibold text-foreground">
+            {existingResponse!.valueNumber}{unitLabel}
+          </span>
+        </p>
+      )}
+      <div className="flex gap-2">
+        <Input
+          type="number"
+          step="any"
+          value={numberInput}
+          onChange={(e) => setNumberInput(e.target.value)}
+          onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), submitNumber())}
+          placeholder={`Entrez une valeur${unitLabel ? ` (${recurring.unit})` : ''}`}
+          className="flex-1"
+          disabled={isSubmitting}
+          aria-label={`Valeur ${recurring.name}`}
+        />
+        <Button
+          size="sm"
+          onClick={submitNumber}
+          disabled={isSubmitting || numberInput === ''}
+          className="shrink-0"
+        >
+          ✓
+        </Button>
       </div>
-      <Slider
-        min={1}
-        max={10}
-        step={0.5}
-        value={[currentValue]}
-        onValueCommit={([val]) => handleSave({ valueNumber: val })}
-        aria-label={`Valeur ${recurring.name}`}
-        style={{ accentColor: '#8B5CF6' }}
-      />
     </div>
   )
 }
