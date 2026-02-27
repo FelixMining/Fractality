@@ -58,7 +58,7 @@
  * - Use .upgrade() callback for data transformations
  */
 
-export const DB_VERSION = 14
+export const DB_VERSION = 15
 
 export const DB_STORES_V1 = {
   syncQueue: '++id, entity, entityId, operation, createdAt',
@@ -153,4 +153,13 @@ export const DB_STORES_V13 = {
 export const DB_STORES_V14 = {
   ...DB_STORES_V13,
   journal_entries: '&id, userId, entryDate, createdAt, updatedAt, isDeleted',
+} as const
+
+/**
+ * Version 15 (BUG-001 extension):
+ * - work_sessions: Ajout de l'index status pour trouver les sessions en cours (cross-device)
+ */
+export const DB_STORES_V15 = {
+  ...DB_STORES_V14,
+  work_sessions: '&id, userId, createdAt, updatedAt, isDeleted, date, status',
 } as const

@@ -14,6 +14,7 @@ import {
   DB_STORES_V12,
   DB_STORES_V13,
   DB_STORES_V14,
+  DB_STORES_V15,
 } from './migrations'
 import type { Project } from '@/schemas/project.schema'
 import type { WorkSession } from '@/schemas/work-session.schema'
@@ -89,6 +90,7 @@ export class FractalityDatabase extends Dexie {
     this.version(12).stores(DB_STORES_V12)
     this.version(13).stores(DB_STORES_V13)
     this.version(14).stores(DB_STORES_V14)
+    this.version(15).stores(DB_STORES_V15)
   }
 }
 

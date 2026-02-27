@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { useLiveQuery } from 'dexie-react-hooks'
 import { WorkTimer, loadTimerState } from './work-timer'
 import { WorkSessionList, countWorkFilters } from './work-session-list'
 import type { WorkFilters } from './work-session-list'
@@ -45,20 +46,29 @@ export function WorkSessionPage() {
 
   const { withUndo } = useUndo()
 
-  // Restaurer le timer si une session était en cours avant fermeture
+  // Écouter les sessions actives depuis Dexie (cross-device)
+  const activeWorkSession = useLiveQuery(
+    () => workSessionRepository.getActiveSession(),
+    []
+  )
+
+  // Afficher le timer si session active en Dexie OU dans localStorage
   useEffect(() => {
-    if (loadTimerState()) {
+    if (activeWorkSession || loadTimerState()) {
       setShowTimer(true)
     }
-  }, [])
+  }, [activeWorkSession])
 
   const handleStartTimer = () => {
     setShowTimer(true)
   }
 
-  const handleStopTimer = (duration: number) => {
+  const handleStopTimer = async (sessionId: string) => {
     setShowTimer(false)
-    setSessionFormDuration(duration)
+    const session = await workSessionRepository.getById(sessionId)
+    if (!session) return
+    setEditingSessionData(session)
+    setSessionFormDuration(session.duration)
     setFormMode('timer')
     setViewMode('form')
   }
@@ -155,7 +165,10 @@ export function WorkSessionPage() {
       {/* Timer */}
       {showTimer && (
         <div className="py-4">
-          <WorkTimer onStop={handleStopTimer} />
+          <WorkTimer
+            existingSession={activeWorkSession ?? undefined}
+            onStop={handleStopTimer}
+          />
         </div>
       )}
 

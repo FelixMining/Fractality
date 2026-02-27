@@ -49,6 +49,17 @@ class WorkSessionRepository extends BaseRepository<WorkSession> {
 
     return allSessions.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
   }
+
+  /**
+   * Retourne la session de travail active (en cours), s'il en existe une.
+   * Utilisé pour la persistance cross-device du timer.
+   * @returns La première session non-supprimée avec status 'in_progress', ou undefined
+   */
+  async getActiveSession(): Promise<WorkSession | undefined> {
+    return this.table
+      .filter((s) => !s.isDeleted && (s.status as string) === 'in_progress')
+      .first()
+  }
 }
 
 export const workSessionRepository = new WorkSessionRepository()

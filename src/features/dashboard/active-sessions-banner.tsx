@@ -5,68 +5,101 @@ import { Button } from '@/components/ui/button'
 import { Timer, Dumbbell, Play, Pause, Square, ArrowRight } from 'lucide-react'
 import { useWorkoutStore } from '@/stores/workout.store'
 import { db } from '@/lib/db/database'
+import { workSessionRepository } from '@/lib/db/repositories/work-session.repository'
 import {
   loadTimerState,
   saveTimerState,
-  type TimerState,
 } from '@/features/sessions/work/work-timer'
+import type { WorkSession } from '@/schemas/work-session.schema'
 import { formatDuration } from '@/lib/utils'
-
-// ─── Hook : chronomètre de travail depuis localStorage ───────────────────────
-
-function useWorkTimer() {
-  const [state, setState] = useState<TimerState | null>(() => loadTimerState())
-  const [elapsed, setElapsed] = useState(0)
-
-  useEffect(() => {
-    const tick = () => {
-      const s = loadTimerState()
-      setState(s)
-      if (!s) { setElapsed(0); return }
-      if (s.isPaused) {
-        setElapsed(Math.floor(s.elapsedSecs))
-      } else {
-        setElapsed(Math.floor(s.elapsedSecs + (Date.now() - s.activeStartedAt) / 1000))
-      }
-    }
-    tick()
-    const id = setInterval(tick, 1000)
-    return () => clearInterval(id)
-  }, [])
-
-  const pause = () => {
-    const s = loadTimerState()
-    if (!s || s.isPaused) return
-    const updated: TimerState = {
-      activeStartedAt: s.activeStartedAt,
-      elapsedSecs: s.elapsedSecs + (Date.now() - s.activeStartedAt) / 1000,
-      isPaused: true,
-    }
-    saveTimerState(updated)
-    setState(updated)
-    setElapsed(Math.floor(updated.elapsedSecs))
-  }
-
-  const resume = () => {
-    const s = loadTimerState()
-    if (!s || !s.isPaused) return
-    const updated: TimerState = {
-      activeStartedAt: Date.now(),
-      elapsedSecs: s.elapsedSecs,
-      isPaused: false,
-    }
-    saveTimerState(updated)
-    setState(updated)
-  }
-
-  return { active: !!state, isPaused: state?.isPaused ?? false, elapsed, pause, resume }
-}
 
 // ─── Carte session de travail ─────────────────────────────────────────────────
 
-function WorkTimerCard() {
+function WorkTimerCard({ session }: { session: WorkSession }) {
   const navigate = useNavigate()
-  const { isPaused, elapsed, pause, resume } = useWorkTimer()
+  const [elapsed, setElapsed] = useState(0)
+  const [isPaused, setIsPaused] = useState(session.timerPaused ?? false)
+
+  // Calculer l'elapsed et le mettre à jour chaque seconde
+  useEffect(() => {
+    const computeElapsed = () => {
+      if (isPaused) {
+        return session.timerElapsedSecs ?? 0
+      }
+      const base = session.timerElapsedSecs ?? 0
+      const startedAt = session.timerStartedAt
+        ? new Date(session.timerStartedAt).getTime()
+        : Date.now()
+      return base + (Date.now() - startedAt) / 1000
+    }
+
+    setElapsed(Math.floor(computeElapsed()))
+
+    if (isPaused) return
+
+    const id = setInterval(() => {
+      setElapsed(Math.floor(computeElapsed()))
+    }, 1000)
+    return () => clearInterval(id)
+  }, [isPaused, session.timerElapsedSecs, session.timerStartedAt])
+
+  // Synchroniser isPaused depuis la session Dexie (autre device peut changer l'état)
+  useEffect(() => {
+    setIsPaused(session.timerPaused ?? false)
+  }, [session.timerPaused])
+
+  const isLocalDevice = loadTimerState()?.sessionId === session.id
+
+  const pause = async () => {
+    const currentElapsed = (session.timerElapsedSecs ?? 0) +
+      (session.timerStartedAt
+        ? (Date.now() - new Date(session.timerStartedAt).getTime()) / 1000
+        : 0)
+
+    // Mettre à jour Dexie
+    await workSessionRepository.update(session.id, {
+      timerPaused: true,
+      timerElapsedSecs: currentElapsed,
+    } as any)
+
+    // Mettre à jour localStorage si on est sur le device local
+    if (isLocalDevice) {
+      const saved = loadTimerState()
+      if (saved) {
+        saveTimerState({
+          ...saved,
+          elapsedSecs: currentElapsed,
+          isPaused: true,
+        })
+      }
+    }
+
+    setIsPaused(true)
+  }
+
+  const resume = async () => {
+    const now = Date.now()
+
+    // Mettre à jour Dexie
+    await workSessionRepository.update(session.id, {
+      timerPaused: false,
+      timerStartedAt: new Date(now).toISOString(),
+    } as any)
+
+    // Mettre à jour localStorage si on est sur le device local
+    if (isLocalDevice) {
+      const saved = loadTimerState()
+      if (saved) {
+        saveTimerState({
+          ...saved,
+          activeStartedAt: now,
+          isPaused: false,
+        })
+      }
+    }
+
+    setIsPaused(false)
+  }
 
   return (
     <div className="flex items-center justify-between gap-3 rounded-xl border border-primary/30 bg-primary/10 p-4">
@@ -185,21 +218,18 @@ function WorkoutSessionCard() {
 
 export function ActiveSessionsBanner() {
   const activeWorkoutSession = useWorkoutStore((s) => s.activeSession)
-  const [hasWorkTimer, setHasWorkTimer] = useState(() => !!loadTimerState())
 
-  // Re-check le timer de travail toutes les secondes
-  useEffect(() => {
-    const id = setInterval(() => {
-      setHasWorkTimer(!!loadTimerState())
-    }, 1000)
-    return () => clearInterval(id)
-  }, [])
+  // Écouter les sessions de travail actives depuis Dexie (cross-device)
+  const activeWorkSession = useLiveQuery(
+    () => workSessionRepository.getActiveSession(),
+    []
+  )
 
-  if (!hasWorkTimer && !activeWorkoutSession) return null
+  if (!activeWorkSession && !activeWorkoutSession) return null
 
   return (
     <div className="flex flex-col gap-3">
-      {hasWorkTimer && <WorkTimerCard />}
+      {activeWorkSession && <WorkTimerCard session={activeWorkSession} />}
       {activeWorkoutSession && <WorkoutSessionCard />}
     </div>
   )
