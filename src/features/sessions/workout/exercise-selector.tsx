@@ -19,6 +19,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
+import { Link } from '@tanstack/react-router'
 import { Search, Dumbbell } from 'lucide-react'
 
 interface ExerciseSelectorProps {
@@ -111,9 +112,15 @@ export function ExerciseSelector({
       <div className="flex flex-col items-center justify-center py-12 text-center border border-dashed rounded-lg">
         <Dumbbell className="h-16 w-16 text-muted-foreground mb-4" />
         <h3 className="text-lg font-semibold mb-2">Bibliothèque vide</h3>
-        <p className="text-muted-foreground">
+        <p className="text-muted-foreground mb-4">
           Créez des exercices d'abord pour les ajouter à une séance-type
         </p>
+        <Link
+          to="/workout/exercise-library"
+          className="text-sm font-medium text-primary underline underline-offset-4"
+        >
+          Aller à la bibliothèque d'exercices →
+        </Link>
       </div>
     )
   }

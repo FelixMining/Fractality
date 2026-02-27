@@ -1,4 +1,5 @@
 import { useLiveQuery } from 'dexie-react-hooks'
+import { useNavigate } from '@tanstack/react-router'
 import { workoutProgramRepository } from '@/lib/db/repositories/workout-program.repository'
 import { workoutSessionTemplateRepository } from '@/lib/db/repositories/workout-session-template.repository'
 import type { WorkoutProgram } from '@/schemas/workout-program.schema'
@@ -10,7 +11,7 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from '@/components/ui/accordion'
-import { Calendar, Pencil, Plus, Trash2, X } from 'lucide-react'
+import { Calendar, Pencil, Play, Plus, Trash2, X } from 'lucide-react'
 import { MUSCLE_GROUP_LABELS } from '@/schemas/workout-exercise.schema'
 
 interface ProgramDetailProps {
@@ -34,6 +35,8 @@ export function ProgramDetail({
   onAddSession,
   onDeleteSession,
 }: ProgramDetailProps) {
+  const navigate = useNavigate()
+
   const templates = useLiveQuery(
     () => workoutProgramRepository.getSessionTemplates(program.id),
     [program.id]
@@ -63,7 +66,7 @@ export function ProgramDetail({
         {program.description && (
           <p className="text-muted-foreground mt-2">{program.description}</p>
         )}
-        <div className="flex gap-2 mt-4">
+        <div className="flex flex-wrap gap-2 mt-4">
           <Button onClick={onAddSession}>
             <Plus className="h-4 w-4 mr-2" />
             Ajouter une séance-type
@@ -95,7 +98,7 @@ export function ProgramDetail({
               <AccordionTrigger>
                 <div className="flex items-center gap-2">
                   <span>{template.name}</span>
-                  <Badge variant="secondary">{exercises.length} exercices</Badge>
+                  <Badge variant="secondary">{exercises.length} exercice{exercises.length !== 1 ? 's' : ''}</Badge>
                 </div>
               </AccordionTrigger>
               <AccordionContent>
@@ -121,13 +124,27 @@ export function ProgramDetail({
                       <Button
                         variant="ghost"
                         size="icon"
-                        onClick={() => onDeleteSession(template.id)}
-                        aria-label="Retirer exercice"
+                        onClick={() => onDeleteSession(templateExercise.id)}
+                        aria-label="Retirer l'exercice"
                       >
                         <X className="h-4 w-4" />
                       </Button>
                     </div>
                   ))}
+
+                  {/* Bouton lancer la séance */}
+                  <Button
+                    className="w-full mt-3"
+                    onClick={() =>
+                      void navigate({
+                        to: '/sessions/workout/live/$sessionTemplateId',
+                        params: { sessionTemplateId: template.id },
+                      })
+                    }
+                  >
+                    <Play className="h-4 w-4 mr-2" />
+                    Lancer la séance
+                  </Button>
                 </div>
               </AccordionContent>
             </AccordionItem>
