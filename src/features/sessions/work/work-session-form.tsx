@@ -236,7 +236,7 @@ export function WorkSessionForm({
   }
 
   return (
-    <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+    <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6 w-full overflow-x-hidden">
       {/* Tabs pour switcher entre modes */}
       <Tabs value={selectedMode} onValueChange={(v) => setSelectedMode(v as 'timer' | 'manual')}>
         <TabsList className="grid w-full grid-cols-2">
@@ -264,6 +264,7 @@ export function WorkSessionForm({
             <Input
               id="date"
               type="datetime-local"
+              className="w-full min-w-0"
               value={form.watch('date') ? new Date(form.watch('date')).toISOString().slice(0, 16) : defaultDate}
               onChange={(e) => {
                 const isoString = e.target.value ? new Date(e.target.value).toISOString() : new Date().toISOString()
@@ -285,6 +286,7 @@ export function WorkSessionForm({
             <Input
               id="startTime"
               type="datetime-local"
+              className="w-full min-w-0"
               {...form.register('startTime')}
               autoFocus
               aria-invalid={(form.formState.errors as any).startTime ? 'true' : 'false'}
@@ -304,6 +306,7 @@ export function WorkSessionForm({
             <Input
               id="endTime"
               type="datetime-local"
+              className="w-full min-w-0"
               {...form.register('endTime')}
               aria-invalid={(form.formState.errors as any).endTime ? 'true' : 'false'}
               aria-describedby={(form.formState.errors as any).endTime ? 'endTime-error' : undefined}
