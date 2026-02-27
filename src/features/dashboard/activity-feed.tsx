@@ -7,10 +7,12 @@ import {
   CalendarDays,
   BookOpen,
   CheckSquare,
+  History,
   type LucideIcon,
 } from 'lucide-react'
 import { db } from '@/lib/db/database'
 import { ActivityFeedItem } from '@/components/shared/activity-feed-item'
+import { SectionTitle } from '@/features/dashboard/today-summary'
 import { formatDuration } from '@/lib/utils'
 
 const FEED_LIMIT = 10
@@ -166,9 +168,7 @@ export function ActivityFeed() {
   if (feedItems === undefined) {
     return (
       <section aria-label="Activité récente">
-        <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-muted-foreground">
-          Activité récente
-        </h2>
+        <SectionTitle icon={<History size={17} />} label="Activité récente" />
         <ul className="flex flex-col gap-2">
           {[1, 2, 3].map((i) => (
             <li key={i} className="h-14 animate-pulse rounded-xl bg-card" />
@@ -184,9 +184,7 @@ export function ActivityFeed() {
 
   return (
     <section aria-label="Activité récente">
-      <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-muted-foreground">
-        Activité récente
-      </h2>
+      <SectionTitle icon={<History size={17} />} label="Activité récente" />
       <ul className="flex flex-col gap-2">
         {feedItems.map((item) => {
           const { Icon, color } = ICON_CONFIG[item.type]
