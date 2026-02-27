@@ -1,6 +1,5 @@
-import { createFileRoute } from '@tanstack/react-router'
-import { WorkoutPage } from '@/features/sessions/workout/workout-page'
+import { createFileRoute, Outlet } from '@tanstack/react-router'
 
 export const Route = createFileRoute('/_auth/sessions/workout')({
-  component: WorkoutPage,
+  component: () => <Outlet />,
 })

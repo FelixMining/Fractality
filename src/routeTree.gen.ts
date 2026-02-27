@@ -39,6 +39,7 @@ import { Route as AuthStatsCardioRouteImport } from './routes/_auth/stats/cardio
 import { Route as AuthSessionsWorkoutRouteImport } from './routes/_auth/sessions/workout'
 import { Route as AuthSessionsWorkRouteImport } from './routes/_auth/sessions/work'
 import { Route as AuthSessionsCardioRouteImport } from './routes/_auth/sessions/cardio'
+import { Route as AuthSessionsWorkoutIndexRouteImport } from './routes/_auth/sessions/workout/index'
 import { Route as AuthSessionsWorkoutProgramsRouteImport } from './routes/_auth/sessions/workout/programs'
 import { Route as AuthSessionsWorkoutHistoryRouteImport } from './routes/_auth/sessions/workout/history'
 import { Route as AuthSessionsWorkoutProgramsProgramIdRouteImport } from './routes/_auth/sessions/workout/programs.$programId'
@@ -195,6 +196,12 @@ const AuthSessionsCardioRoute = AuthSessionsCardioRouteImport.update({
   path: '/cardio',
   getParentRoute: () => AuthSessionsRoute,
 } as any)
+const AuthSessionsWorkoutIndexRoute =
+  AuthSessionsWorkoutIndexRouteImport.update({
+    id: '/',
+    path: '/',
+    getParentRoute: () => AuthSessionsWorkoutRoute,
+  } as any)
 const AuthSessionsWorkoutProgramsRoute =
   AuthSessionsWorkoutProgramsRouteImport.update({
     id: '/programs',
@@ -258,6 +265,7 @@ export interface FileRoutesByFullPath {
   '/stats/': typeof AuthStatsIndexRoute
   '/sessions/workout/history': typeof AuthSessionsWorkoutHistoryRoute
   '/sessions/workout/programs': typeof AuthSessionsWorkoutProgramsRouteWithChildren
+  '/sessions/workout/': typeof AuthSessionsWorkoutIndexRoute
   '/sessions/workout/$sessionId/edit': typeof AuthSessionsWorkoutSessionIdEditRoute
   '/sessions/workout/live/$sessionTemplateId': typeof AuthSessionsWorkoutLiveSessionTemplateIdRoute
   '/sessions/workout/programs/$programId': typeof AuthSessionsWorkoutProgramsProgramIdRoute
@@ -275,7 +283,6 @@ export interface FileRoutesByTo {
   '/': typeof AuthIndexRoute
   '/sessions/cardio': typeof AuthSessionsCardioRoute
   '/sessions/work': typeof AuthSessionsWorkRoute
-  '/sessions/workout': typeof AuthSessionsWorkoutRouteWithChildren
   '/stats/cardio': typeof AuthStatsCardioRoute
   '/stats/events': typeof AuthStatsEventsRoute
   '/stats/habits': typeof AuthStatsHabitsRoute
@@ -294,6 +301,7 @@ export interface FileRoutesByTo {
   '/stats': typeof AuthStatsIndexRoute
   '/sessions/workout/history': typeof AuthSessionsWorkoutHistoryRoute
   '/sessions/workout/programs': typeof AuthSessionsWorkoutProgramsRouteWithChildren
+  '/sessions/workout': typeof AuthSessionsWorkoutIndexRoute
   '/sessions/workout/$sessionId/edit': typeof AuthSessionsWorkoutSessionIdEditRoute
   '/sessions/workout/live/$sessionTemplateId': typeof AuthSessionsWorkoutLiveSessionTemplateIdRoute
   '/sessions/workout/programs/$programId': typeof AuthSessionsWorkoutProgramsProgramIdRoute
@@ -332,6 +340,7 @@ export interface FileRoutesById {
   '/_auth/stats/': typeof AuthStatsIndexRoute
   '/_auth/sessions/workout/history': typeof AuthSessionsWorkoutHistoryRoute
   '/_auth/sessions/workout/programs': typeof AuthSessionsWorkoutProgramsRouteWithChildren
+  '/_auth/sessions/workout/': typeof AuthSessionsWorkoutIndexRoute
   '/_auth/sessions/workout/$sessionId/edit': typeof AuthSessionsWorkoutSessionIdEditRoute
   '/_auth/sessions/workout/live/$sessionTemplateId': typeof AuthSessionsWorkoutLiveSessionTemplateIdRoute
   '/_auth/sessions/workout/programs/$programId': typeof AuthSessionsWorkoutProgramsProgramIdRoute
@@ -370,6 +379,7 @@ export interface FileRouteTypes {
     | '/stats/'
     | '/sessions/workout/history'
     | '/sessions/workout/programs'
+    | '/sessions/workout/'
     | '/sessions/workout/$sessionId/edit'
     | '/sessions/workout/live/$sessionTemplateId'
     | '/sessions/workout/programs/$programId'
@@ -387,7 +397,6 @@ export interface FileRouteTypes {
     | '/'
     | '/sessions/cardio'
     | '/sessions/work'
-    | '/sessions/workout'
     | '/stats/cardio'
     | '/stats/events'
     | '/stats/habits'
@@ -406,6 +415,7 @@ export interface FileRouteTypes {
     | '/stats'
     | '/sessions/workout/history'
     | '/sessions/workout/programs'
+    | '/sessions/workout'
     | '/sessions/workout/$sessionId/edit'
     | '/sessions/workout/live/$sessionTemplateId'
     | '/sessions/workout/programs/$programId'
@@ -443,6 +453,7 @@ export interface FileRouteTypes {
     | '/_auth/stats/'
     | '/_auth/sessions/workout/history'
     | '/_auth/sessions/workout/programs'
+    | '/_auth/sessions/workout/'
     | '/_auth/sessions/workout/$sessionId/edit'
     | '/_auth/sessions/workout/live/$sessionTemplateId'
     | '/_auth/sessions/workout/programs/$programId'
@@ -666,6 +677,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthSessionsCardioRouteImport
       parentRoute: typeof AuthSessionsRoute
     }
+    '/_auth/sessions/workout/': {
+      id: '/_auth/sessions/workout/'
+      path: '/'
+      fullPath: '/sessions/workout/'
+      preLoaderRoute: typeof AuthSessionsWorkoutIndexRouteImport
+      parentRoute: typeof AuthSessionsWorkoutRoute
+    }
     '/_auth/sessions/workout/programs': {
       id: '/_auth/sessions/workout/programs'
       path: '/programs'
@@ -722,6 +740,7 @@ const AuthSessionsWorkoutProgramsRouteWithChildren =
 interface AuthSessionsWorkoutRouteChildren {
   AuthSessionsWorkoutHistoryRoute: typeof AuthSessionsWorkoutHistoryRoute
   AuthSessionsWorkoutProgramsRoute: typeof AuthSessionsWorkoutProgramsRouteWithChildren
+  AuthSessionsWorkoutIndexRoute: typeof AuthSessionsWorkoutIndexRoute
   AuthSessionsWorkoutSessionIdEditRoute: typeof AuthSessionsWorkoutSessionIdEditRoute
   AuthSessionsWorkoutLiveSessionTemplateIdRoute: typeof AuthSessionsWorkoutLiveSessionTemplateIdRoute
 }
@@ -730,6 +749,7 @@ const AuthSessionsWorkoutRouteChildren: AuthSessionsWorkoutRouteChildren = {
   AuthSessionsWorkoutHistoryRoute: AuthSessionsWorkoutHistoryRoute,
   AuthSessionsWorkoutProgramsRoute:
     AuthSessionsWorkoutProgramsRouteWithChildren,
+  AuthSessionsWorkoutIndexRoute: AuthSessionsWorkoutIndexRoute,
   AuthSessionsWorkoutSessionIdEditRoute: AuthSessionsWorkoutSessionIdEditRoute,
   AuthSessionsWorkoutLiveSessionTemplateIdRoute:
     AuthSessionsWorkoutLiveSessionTemplateIdRoute,
